@@ -1,0 +1,13 @@
+{
+  "name": "ccca",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "docker:start": "docker compose up -d",
+    "docker:stop": "docker compose stop",
+    "docker:clean": "docker compose rm -fsv"
+  },
+  "dependencies": {
+  }
+}
