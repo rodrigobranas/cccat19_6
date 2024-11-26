@@ -1,3 +1,5 @@
+// Entity
+
 export function validateCpf (cpf: string) {
 	if (!cpf) return false;
 	cpf = clean(cpf); 
