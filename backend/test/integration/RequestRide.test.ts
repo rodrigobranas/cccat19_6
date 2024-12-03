@@ -7,6 +7,7 @@ import RequestRide from "../../src/application/usecase/RequestRide";
 import { RideRepositoryDatabase } from "../../src/infra/repository/RideRepository";
 import Signup from "../../src/application/usecase/Signup";
 import sinon from "sinon";
+import { PositionRepositoryDatabase } from "../../src/infra/repository/PositionRepository";
 
 let connection: DatabaseConnection;
 let signup: Signup;
@@ -19,11 +20,12 @@ beforeEach(() => {
     connection = new PgPromiseAdapter();
     const accountRepository = new AccountRepositoryDatabase(connection);
     const rideRepository = new RideRepositoryDatabase(connection);
+    const positionRepository = new PositionRepositoryDatabase(connection);
     const mailerGateway = new MailerGatewayMemory();
     signup = new Signup(accountRepository, mailerGateway);
     getAccount = new GetAccount(accountRepository);
     requestRide = new RequestRide(accountRepository, rideRepository);
-    getRide = new GetRide(accountRepository, rideRepository);
+    getRide = new GetRide(accountRepository, rideRepository, positionRepository);
 });
 
 test("Deve solicitar uma corrida", async function () {
