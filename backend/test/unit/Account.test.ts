@@ -1,9 +1,9 @@
-import Account from "../../src/domain/Account";
+import Account from "../../src/domain/entity/Account";
 
 test("Deve criar uma conta de passageiro", function () {
     const account = Account.create("John Doe", "john.doe@gmail.com", "97456321558", "", "123456", true, false);
-    expect(account.name).toBe("John Doe");
-    expect(account.email).toBe("john.doe@gmail.com");
+    expect(account.getName()).toBe("John Doe");
+    expect(account.getEmail()).toBe("john.doe@gmail.com");
 });
 
 test("Não deve criar uma conta com nome inválido", function () {

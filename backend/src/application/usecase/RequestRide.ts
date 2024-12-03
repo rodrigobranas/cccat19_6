@@ -1,4 +1,4 @@
-import Ride from "../../domain/Ride";
+import Ride from "../../domain/entity/Ride";
 import RideRepository from "../../infra/repository/RideRepository";
 import AccountRepository from "../repository/AccountRepository";
 
@@ -15,7 +15,7 @@ export default class RequestRide {
 		const ride = Ride.create(input.passengerId, input.fromLat, input.fromLong, input.toLat, input.toLong);
 		await this.rideRepository.saveRide(ride);
 		return {
-			rideId: ride.rideId
+			rideId: ride.getRideId()
 		}
 	}
 }
