@@ -1,9 +1,15 @@
 import Position from "../../domain/entity/Position";
+import { inject } from "../../infra/di/Registry";
 import PositionRepository from "../../infra/repository/PositionRepository";
 import RideRepository from "../../infra/repository/RideRepository";
 
 export default class UpdatePosition {
-	constructor (readonly rideRepository: RideRepository, readonly positionRepository: PositionRepository) {
+	@inject("rideRepository")
+	rideRepository!: RideRepository;
+	@inject("positionRepository")
+	positionRepository!: PositionRepository;
+	
+	constructor () {
 	}
 	
 	async execute (input: Input) {

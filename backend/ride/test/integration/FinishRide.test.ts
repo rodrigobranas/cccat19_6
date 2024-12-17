@@ -10,6 +10,12 @@ import { PositionRepositoryDatabase } from "../../src/infra/repository/PositionR
 import AccountGateway, { AccountGatewayHttp } from "../../src/infra/gateway/AccountGateway";
 import { AxiosAdapter } from "../../src/infra/http/HttpClient";
 import FinishRide from "../../src/application/usecase/FinishRide";
+import { TransactionRepositoryDatabase } from "../../src/infra/repository/TransactionRepository";
+import Registry from "../../src/infra/di/Registry";
+import ProcessPayment from "../../src/application/usecase/ProcessPayment";
+import ORM from "../../src/infra/orm/ORM";
+import Mediator from "../../src/infra/mediator/Mediator";
+import { RabbitMQAdapter } from "../../src/infra/queue/Queue";
 
 let connection: DatabaseConnection;
 let requestRide: RequestRide;
@@ -20,18 +26,34 @@ let updatePosition: UpdatePosition;
 let accountGateway: AccountGateway;
 let finishRide: FinishRide;
 
-beforeEach(() => {
-    const httpClient = new AxiosAdapter();
-    accountGateway = new AccountGatewayHttp(httpClient);
+async function sleep (time: number) {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve(true);
+        }, time);
+    });
+}
+
+beforeEach(async () => {
+    Registry.getInstance().provide("httpClient", new AxiosAdapter());
     connection = new PgPromiseAdapter();
-    const rideRepository = new RideRepositoryDatabase(connection);
-    const positionRepository = new PositionRepositoryDatabase(connection);
-    requestRide = new RequestRide(accountGateway, rideRepository);
-    getRide = new GetRide(accountGateway, rideRepository, positionRepository);
-    acceptRide = new AcceptRide(accountGateway, rideRepository);
-    startRide = new StartRide(rideRepository);
-    updatePosition = new UpdatePosition(rideRepository, positionRepository);
-    finishRide = new FinishRide(rideRepository, positionRepository);
+    Registry.getInstance().provide("connection", connection);
+    accountGateway = new AccountGatewayHttp();
+    Registry.getInstance().provide("accountGateway", accountGateway);
+    const queue = new RabbitMQAdapter();
+    await queue.connect();
+    Registry.getInstance().provide("queue", queue);
+    Registry.getInstance().provide("orm", new ORM());
+    Registry.getInstance().provide("transactionRepository", new TransactionRepositoryDatabase());
+    Registry.getInstance().provide("rideRepository", new RideRepositoryDatabase());
+    Registry.getInstance().provide("positionRepository", new PositionRepositoryDatabase());
+    Registry.getInstance().provide("processPayment", new ProcessPayment());
+    requestRide = new RequestRide();
+    acceptRide = new AcceptRide();
+    startRide = new StartRide();
+    updatePosition = new UpdatePosition();
+    finishRide = new FinishRide();
+    getRide = new GetRide();
 });
 
 test("Deve finalizar uma corrida em horário comercial", async function () {
@@ -87,6 +109,7 @@ test("Deve finalizar uma corrida em horário comercial", async function () {
         rideId: outputRequestRide.rideId
     }
     await finishRide.execute(inputFinishRide);
+    await sleep(200);
     const outputGetRide = await getRide.execute(outputRequestRide.rideId);
     expect(outputGetRide.status).toBe("completed");
     expect(outputGetRide.distance).toBe(10);
@@ -146,6 +169,7 @@ test("Deve finalizar uma corrida no domingo", async function () {
         rideId: outputRequestRide.rideId
     }
     await finishRide.execute(inputFinishRide);
+    await sleep(200);
     const outputGetRide = await getRide.execute(outputRequestRide.rideId);
     expect(outputGetRide.status).toBe("completed");
     expect(outputGetRide.distance).toBe(10);
@@ -205,6 +229,7 @@ test("Deve finalizar uma corrida em horário noturno", async function () {
         rideId: outputRequestRide.rideId
     }
     await finishRide.execute(inputFinishRide);
+    await sleep(200);
     const outputGetRide = await getRide.execute(outputRequestRide.rideId);
     expect(outputGetRide.status).toBe("completed");
     expect(outputGetRide.distance).toBe(10);
@@ -264,10 +289,12 @@ test("Deve finalizar uma corrida em horário comercial", async function () {
         rideId: outputRequestRide.rideId
     }
     await finishRide.execute(inputFinishRide);
+    await sleep(200);
     const outputGetRide = await getRide.execute(outputRequestRide.rideId);
     expect(outputGetRide.status).toBe("completed");
     expect(outputGetRide.distance).toBe(10);
     expect(outputGetRide.fare).toBe(1);
+    expect(outputGetRide.transactionStatus).toBe("waiting_payment");
 });
 
 afterEach(async () => {

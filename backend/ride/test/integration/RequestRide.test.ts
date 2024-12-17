@@ -6,21 +6,41 @@ import sinon from "sinon";
 import { PositionRepositoryDatabase } from "../../src/infra/repository/PositionRepository";
 import AccountGateway, { AccountGatewayHttp } from "../../src/infra/gateway/AccountGateway";
 import { AxiosAdapter, FetchAdapter } from "../../src/infra/http/HttpClient";
+import AcceptRide from "../../src/application/usecase/AcceptRide";
+import FinishRide from "../../src/application/usecase/FinishRide";
+import ProcessPayment from "../../src/application/usecase/ProcessPayment";
+import StartRide from "../../src/application/usecase/StartRide";
+import UpdatePosition from "../../src/application/usecase/UpdatePosition";
+import Registry from "../../src/infra/di/Registry";
+import ORM from "../../src/infra/orm/ORM";
+import { TransactionRepositoryDatabase } from "../../src/infra/repository/TransactionRepository";
 
 let connection: DatabaseConnection;
 let requestRide: RequestRide;
 let getRide: GetRide;
+let acceptRide: AcceptRide;
+let startRide: StartRide;
+let updatePosition: UpdatePosition;
 let accountGateway: AccountGateway;
+let finishRide: FinishRide;
 
-beforeEach(() => {
-    // const httpClient = new AxiosAdapter();
-    const httpClient = new FetchAdapter();
-    accountGateway = new AccountGatewayHttp(httpClient);
+beforeEach(async () => {
+    Registry.getInstance().provide("httpClient", new AxiosAdapter());
     connection = new PgPromiseAdapter();
-    const rideRepository = new RideRepositoryDatabase(connection);
-    const positionRepository = new PositionRepositoryDatabase(connection);
-    requestRide = new RequestRide(accountGateway, rideRepository);
-    getRide = new GetRide(accountGateway, rideRepository, positionRepository);
+    Registry.getInstance().provide("connection", connection);
+    accountGateway = new AccountGatewayHttp();
+    Registry.getInstance().provide("accountGateway", accountGateway);
+    Registry.getInstance().provide("orm", new ORM());
+    Registry.getInstance().provide("transactionRepository", new TransactionRepositoryDatabase());
+    Registry.getInstance().provide("rideRepository", new RideRepositoryDatabase());
+    Registry.getInstance().provide("positionRepository", new PositionRepositoryDatabase());
+    Registry.getInstance().provide("processPayment", new ProcessPayment());
+    requestRide = new RequestRide();
+    acceptRide = new AcceptRide();
+    startRide = new StartRide();
+    updatePosition = new UpdatePosition();
+    finishRide = new FinishRide();
+    getRide = new GetRide();
 });
 
 test("Deve solicitar uma corrida", async function () {

@@ -1,3 +1,4 @@
+import { inject } from "../di/Registry";
 import HttpClient from "../http/HttpClient";
 
 export default interface AccountGateway {
@@ -6,8 +7,10 @@ export default interface AccountGateway {
 }
 
 export class AccountGatewayHttp implements AccountGateway {
+	@inject("httpClient")
+	httpClient!: HttpClient;
 
-    constructor (readonly httpClient: HttpClient) {
+    constructor () {
     }
     
     async signup(input: any): Promise<any> {

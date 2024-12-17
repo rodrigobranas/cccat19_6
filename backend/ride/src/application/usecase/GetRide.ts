@@ -4,18 +4,30 @@ import PositionRepository from "../../infra/repository/PositionRepository";
 import DistanceCalculator from "../../domain/service/DistanceCalculator";
 import Ride from "../../domain/entity/Ride";
 import AccountGateway from "../../infra/gateway/AccountGateway";
+import TransactionRepository from "../../infra/repository/TransactionRepository";
+import { inject } from "../../infra/di/Registry";
 
 export default class GetRide {
-	// Usar DAO ao invés de Repository
-	constructor (readonly accountGateway: AccountGateway, readonly rideRepository: RideRepository, readonly positionRepository: PositionRepository) {
+	@inject("accountGateway")
+	accountGateway!: AccountGateway;
+	@inject("rideRepository")
+	rideRepository!: RideRepository;
+	@inject("positionRepository")
+	positionRepository!: PositionRepository;
+	@inject("transactionRepository")
+	transactionRepository!: TransactionRepository;
+	
+	constructor () {
 	}
 	
 	async execute (rideId: string): Promise<Output> {
 		const ride = await this.rideRepository.getRideById(rideId);
 		const passengerAccount = await this.accountGateway.getAccountById(ride.getPassengerId());
 		let distance;
+		let transaction;
 		if (ride.getStatus() === "completed") {
 			distance = ride.getDistance();
+			transaction = await this.transactionRepository.getTransactionByRideId(rideId);
 		} else {
 			const positions = await this.positionRepository.listByRideId(rideId);
 			distance = DistanceCalculator.calculateDistanceBetweenPositions(positions)
@@ -33,7 +45,10 @@ export default class GetRide {
 			distance,
 			status: ride.getStatus(),
 			date: ride.date,
-			passengerName: passengerAccount.name
+			passengerName: passengerAccount.name,
+			transactionId: transaction?.getTransactionId(),
+			transactionAmount: transaction?.amount,
+			transactionStatus: transaction?.status
 		};
 	}
 }
@@ -50,5 +65,8 @@ type Output = {
 	fare: number,
 	distance: number,
 	status: string,
-	date: Date
+	date: Date,
+	transactionId?: string,
+	transactionAmount?: number,
+	transactionStatus?: string,
 }

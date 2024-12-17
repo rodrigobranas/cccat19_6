@@ -1,5 +1,6 @@
 import Position from "../../domain/entity/Position";
 import DatabaseConnection from "../database/DatabaseConnection";
+import { inject } from "../di/Registry";
 
 export default interface PositionRepository {
     savePosition (position: Position): Promise<void>;
@@ -7,8 +8,10 @@ export default interface PositionRepository {
 }
 
 export class PositionRepositoryDatabase implements PositionRepository {
+    @inject("connection")
+    connection!: DatabaseConnection;
     
-    constructor (readonly connection: DatabaseConnection) {
+    constructor () {
 	}
     
     async savePosition(position: Position): Promise<void> {

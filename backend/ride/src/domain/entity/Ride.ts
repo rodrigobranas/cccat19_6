@@ -4,8 +4,10 @@ import UUID from "../vo/UUID";
 import Position from "./Position";
 import DistanceCalculator from "../service/DistanceCalculator";
 import { FareCalculatorFactory } from "../service/FareCalculator";
+import RideCompleted from "../event/RideCompleted";
+import Mediator from "../../infra/mediator/Mediator";
 
-export default class Ride {
+export default class Ride extends Mediator {
     private rideId: UUID;
     private passengerId: UUID;
     private driverId?: UUID;
@@ -25,6 +27,7 @@ export default class Ride {
         private status: string,
         readonly date: Date
     ) {
+        super();
         this.rideId = new UUID(rideId);
         this.passengerId = new UUID(passengerId);
         if (driverId) this.driverId = new UUID(driverId);
@@ -62,6 +65,7 @@ export default class Ride {
             this.fare += FareCalculatorFactory.create(position.date).calculate(distance);
             this.distance += distance;
         }
+        this.notifyAll(new RideCompleted(this.getRideId()));
     }
 
     getDistance () {

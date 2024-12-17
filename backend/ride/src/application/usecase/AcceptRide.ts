@@ -1,9 +1,14 @@
+import { inject } from "../../infra/di/Registry";
 import AccountGateway from "../../infra/gateway/AccountGateway";
 import RideRepository from "../../infra/repository/RideRepository";
 
 export default class AcceptRide {
-	// DIP - Dependency Inversion Principle
-	constructor (readonly accountGateway: AccountGateway, readonly rideRepository: RideRepository) {
+	@inject("accountGateway")
+	accountGateway!: AccountGateway;
+	@inject("rideRepository")
+	rideRepository!: RideRepository;
+		
+	constructor () {
 	}
 	
 	async execute (input: Input) {

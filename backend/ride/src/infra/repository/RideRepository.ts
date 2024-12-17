@@ -1,6 +1,7 @@
 import Position from "../../domain/entity/Position";
 import Ride from "../../domain/entity/Ride";
 import DatabaseConnection from "../database/DatabaseConnection";
+import { inject } from "../di/Registry";
 
 // Repository
 
@@ -13,8 +14,10 @@ export default interface RideRepository {
 }
 
 export class RideRepositoryDatabase implements RideRepository  {
+	@inject("connection")
+	connection!: DatabaseConnection;
 
-	constructor (readonly connection: DatabaseConnection) {
+	constructor () {
 	}
 
 	async getRideById (rideId: string) {

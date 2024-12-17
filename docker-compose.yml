@@ -8,3 +8,8 @@ services:
       - "5432:5432"
     volumes:
       - ./create.sql:/docker-entrypoint-initdb.d/init.sql
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672

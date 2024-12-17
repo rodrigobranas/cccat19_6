@@ -1,9 +1,23 @@
+import ProcessPayment from "./application/usecase/ProcessPayment";
 import { PgPromiseAdapter } from "./infra/database/DatabaseConnection";
-import { ExpressAdapter, HapiAdapter } from "./infra/http/HttpServer";
+import Registry from "./infra/di/Registry";
+import ORM from "./infra/orm/ORM";
+import { RabbitMQAdapter } from "./infra/queue/Queue";
+import { RideRepositoryDatabase } from "./infra/repository/RideRepository";
+import { TransactionRepositoryDatabase } from "./infra/repository/TransactionRepository";
 
 // Entry Point - Composition Root
 
-const httpServer = new ExpressAdapter();
-// const httpServer = new HapiAdapter();
-const connection = new PgPromiseAdapter();
-httpServer.listen(3000);
+(async () => {
+    const queue = new RabbitMQAdapter();
+    await queue.connect();
+    Registry.getInstance().provide("queue", queue);
+    Registry.getInstance().provide("connection", new PgPromiseAdapter());
+    Registry.getInstance().provide("orm", new ORM());
+    Registry.getInstance().provide("transactionRepository", new TransactionRepositoryDatabase());
+    Registry.getInstance().provide("rideRepository", new RideRepositoryDatabase());
+    Registry.getInstance().provide("processPayment", new ProcessPayment());
+    queue.consume("rideCompleted.processPayment", async function (data: any) {
+        await Registry.getInstance().inject("processPayment").execute(data);
+    });
+})();
